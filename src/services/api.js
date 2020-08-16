@@ -1,4 +1,5 @@
 import {DEEZER_TOKEN, DeezerAppId, DeezerAppSecret, SPOTIFY_TOKEN, SpotifyAppId, SpotifyAppSecret} from '../constants'
+import _ from 'lodash';
 
 const HEROKU_PROXY = 'https://cors-anywhere.herokuapp.com';
 
@@ -96,6 +97,7 @@ export async function transferSpotifyPlaylistToDeezerPlaylist(spotifyPlaylistInf
     const NB_SPOTIFY_PLAYLIST_PAGES = Math.ceil(spotifyPlaylistInfo.totalTracks / SPOTIFY_PAGE_SIZE_MAX);
 
     const spotifyTracks =[];
+    const deezerSongs = [];
     var deezerIds = [];
     var notFoundSongs = [];
 
@@ -117,6 +119,10 @@ export async function transferSpotifyPlaylistToDeezerPlaylist(spotifyPlaylistInf
 
         if(deezerResult.data && deezerResult.data[0]){
             console.log('Deezer song ID : ', deezerResult.data[0].id);
+            deezerSongs.push({
+                deezerId: deezerResult.data[0].id,
+                song: `${t.track.name} - ${t.track.artists[0].name}`
+            })
             deezerIds.push(deezerResult.data[0].id);
         }
         else{
@@ -127,17 +133,22 @@ export async function transferSpotifyPlaylistToDeezerPlaylist(spotifyPlaylistInf
             console.log('Song not found')
         }
     }
+
     const uniqueDeezersIds = deezerIds.filter((v,i) => deezerIds.indexOf(v) === i);
     const duplicatedIds = deezerIds.filter((v,i) => deezerIds.indexOf(v) !== i);
+
+    const uniqueObjects = _.uniqBy(deezerSongs, 'deezerId');
+
+    console.log(uniqueObjects.length)
 
     console.log(`Songs not found : `, notFoundSongs);
     console.log(`${duplicatedIds.length} duplicate(s) deleted : `, duplicatedIds)
 
-    const updateRequest = await fetch(`https://api.deezer.com/playlist/${deezerPlaylistId}/tracks?access_token=${localStorage.getItem(DEEZER_TOKEN)}&songs=${uniqueDeezersIds.join(',')}`,
-    {
-        method: 'POST'
-    });
-    const updateResponse = await updateRequest.json();
+    // const updateRequest = await fetch(`https://api.deezer.com/playlist/${deezerPlaylistId}/tracks?access_token=${localStorage.getItem(DEEZER_TOKEN)}&songs=${uniqueDeezersIds.join(',')}`,
+    // {
+    //     method: 'POST'
+    // });
+    // const updateResponse = await updateRequest.json();
 
-    console.log('Udpate response : ', updateResponse);
+    // console.log('Udpate response : ', updateResponse);
 }

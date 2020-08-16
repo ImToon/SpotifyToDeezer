@@ -17,7 +17,7 @@ function Playlists() {
     useEffect(()=>{
         if(spotifyToken && deezerToken){
             getPlaylists();
-            transferSpotifyPlaylistToDeezerPlaylist({id:"4h2RpMS5ylpanH4wU0UFFg", totalTracks:369}, "8008215902");
+            // transferSpotifyPlaylistToDeezerPlaylist({id:"4h2RpMS5ylpanH4wU0UFFg", totalTracks:369}, "8008215902");
         }
     }, [])
 
