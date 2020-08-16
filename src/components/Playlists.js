@@ -4,7 +4,7 @@ import {getDeezerPlaylists, getSpotifyPlaylists, transferSpotifyPlaylistToDeezer
 function Playlists() {
     const [spotifyPlaylists, setSpotifyPlaylists] = useState([]);
     const [deezerPlaylists, setDeezerPlaylists] = useState([]);
-    const spotifyToken = localStorage.getItem(SPOTIFY_TOKEN);
+    const spotifyToken = JSON.parse(localStorage.getItem(SPOTIFY_TOKEN))?.access_token;
     const deezerToken = localStorage.getItem(DEEZER_TOKEN);
 
     const getPlaylists = async ()=>{
@@ -17,7 +17,7 @@ function Playlists() {
     useEffect(()=>{
         if(spotifyToken && deezerToken){
             getPlaylists();
-            transferSpotifyPlaylistToDeezerPlaylist({id:"4h2RpMS5ylpanH4wU0UFFg", totalTracks:369});
+            transferSpotifyPlaylistToDeezerPlaylist({id:"4h2RpMS5ylpanH4wU0UFFg", totalTracks:369}, "8008215902");
         }
     }, [])
 
@@ -32,7 +32,7 @@ function Playlists() {
                         {
                             spotifyPlaylists.map(p =>{
                                 return(
-                                    <p key={p.name} onClick={()=>{console.log(`${p.name} - ${p.tracks.total}`)}}>{p.name}</p>
+                                    <p key={p.name} onClick={()=>{console.log(`${p.name} - ${p.tracks.total} - ${JSON.stringify(p)}`)}}>{p.name}</p>
                                 )
                             })
                         }
