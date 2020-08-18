@@ -1,4 +1,5 @@
 import {DEEZER_TOKEN, DeezerAppId, DeezerAppSecret, SPOTIFY_TOKEN, SpotifyAppId, SpotifyAppSecret} from '../constants'
+import {updateSubject} from './util';
 import _ from 'lodash';
 
 const HEROKU_PROXY = 'https://cors-anywhere.herokuapp.com';
@@ -109,7 +110,7 @@ export async function transferSpotifyPlaylistToDeezerPlaylist(spotifyPlaylistInf
     for(let i = 0; i < spotifyTracks.length; i++){
         const t = spotifyTracks[i];
 
-        console.log(`${t.track.name} - ${t.track.artists[0].name}`);
+        // console.log(`${t.track.name} - ${t.track.artists[0].name}`);
 
         t.track.name = t.track.name.split('(')[0];
 
@@ -118,7 +119,7 @@ export async function transferSpotifyPlaylistToDeezerPlaylist(spotifyPlaylistInf
         const deezerResult = await deezerSearchQuery.json();
 
         if(deezerResult.data && deezerResult.data[0]){
-            console.log('Deezer song ID : ', deezerResult.data[0].id);
+            // console.log('Deezer song ID : ', deezerResult.data[0].id);
             deezerSongs.push({
                 deezerId: deezerResult.data[0].id,
                 song: `${t.track.name} - ${t.track.artists[0].name}`
@@ -126,29 +127,30 @@ export async function transferSpotifyPlaylistToDeezerPlaylist(spotifyPlaylistInf
             deezerIds.push(deezerResult.data[0].id);
         }
         else{
-            notFoundSongs.push({
-                track: t.track.name,
-                artist: t.track.artists[0].name
-            });
-            console.log('Song not found')
+            notFoundSongs.push(`${t.track.name} - ${t.track.artists[0].name}`);
+            // console.log('Song not found')
         }
+
+        updateSubject.notify(i+1)
     }
 
-    const uniqueDeezersIds = deezerIds.filter((v,i) => deezerIds.indexOf(v) === i);
-    const duplicatedIds = deezerIds.filter((v,i) => deezerIds.indexOf(v) !== i);
-
     const uniqueObjects = _.uniqBy(deezerSongs, 'deezerId');
+    const duplicatedObjects = _.differenceWith(deezerSongs, uniqueObjects)
 
-    console.log(uniqueObjects.length)
+    // console.log(`Songs not found : `, notFoundSongs);
+    // console.log('Duplicated songs : ', duplicatedObjects)
 
-    console.log(`Songs not found : `, notFoundSongs);
-    console.log(`${duplicatedIds.length} duplicate(s) deleted : `, duplicatedIds)
-
-    // const updateRequest = await fetch(`https://api.deezer.com/playlist/${deezerPlaylistId}/tracks?access_token=${localStorage.getItem(DEEZER_TOKEN)}&songs=${uniqueDeezersIds.join(',')}`,
-    // {
-    //     method: 'POST'
-    // });
-    // const updateResponse = await updateRequest.json();
+    const updateRequest = await fetch(`https://api.deezer.com/playlist/${deezerPlaylistId}/tracks?access_token=${localStorage.getItem(DEEZER_TOKEN)}&songs=${uniqueObjects.map(o => o.deezerId).join(',')}`,
+    {
+        method: 'POST'
+    });
+    const updateResponse = await updateRequest.json();
 
     // console.log('Udpate response : ', updateResponse);
+
+    return{
+        deezerResponse: updateResponse,
+        notFoundSongs,
+        duplicatedObjects
+    }
 }
